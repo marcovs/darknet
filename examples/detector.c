@@ -558,6 +558,150 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
     }
 }
 
+void test_detector_folder(char *datacfg, char *cfgfile, char *weightfile, char *foldername, float thresh, float hier_thresh, char *outfolder, int fullscreen) {
+    list *options = read_data_cfg(datacfg);
+    char *name_list = option_find_str(options, "names", "data/names.list");
+    char **names = get_labels(name_list);
+    image **alphabet = load_alphabet();
+    network *net = load_network(cfgfile, weightfile, 0);
+    set_batch_network(net, 1);
+    srand(2222222);
+    double time;
+    char buff[256];
+    char *input = buff;
+    float nms=.45;
+    
+    FILE *fin;
+    FILE *fout;
+    char *filelistname;
+    char *foutname;
+    char *foutext = "/objectDetectionOutput.txt";
+    filelistname = malloc(strlen(foldername)+25);
+    foutname = malloc(strlen(foldername)+strlen(foutext));
+    strcpy(filelistname,foldername);
+    strcat(filelistname,"/frameCorrespondences.txt");
+    strcpy(foutname,foldername);
+    strcat(foutname,foutext);
+    char *rootname = "/colour_";
+    char *ext = ".png";
+    fin = fopen(filelistname,"r");
+   // fout = fopen(foutname,"w+");
+    int depthframeidx = 0, rgbframeidx = 0;
+    int ch;
+    int rgb = 1;
+    char buffer[33];
+    int count = 0;
+    while(1){
+        ch = fgetc(fin);
+        if (ch == EOF)
+            break;
+        else {
+            if (ch == ' ') {
+                rgb = 0;
+            } else if (ch == '\n') {
+                //processing
+                sprintf(buffer,"%d",rgbframeidx);
+                char *inputfile = malloc(strlen(foldername) + strlen(buffer) + strlen(rootname) + strlen(ext));
+                strcpy(inputfile,foldername);
+                strcat(inputfile,rootname);
+                strcat(inputfile,buffer);
+                strcat(inputfile,ext);
+
+                image im = load_image_color(inputfile,0,0);
+                image sized = letterbox_image(im, net->w, net->h);
+                //image sized = resize_image(im, net->w, net->h);
+                //image sized2 = resize_max(im, net->w);
+                //image sized = crop_image(sized2, -((net->w - sized2.w)/2), -((net->h - sized2.h)/2), net->w, net->h);
+                //resize_network(net, sized.w, sized.h);
+                layer l = net->layers[net->n-1];
+
+
+                float *X = sized.data;
+                //time=what_time_is_it_now();
+                network_predict(net, X);
+                //printf("%s: Predicted in %f seconds.\n", inputfile, what_time_is_it_now()-time);
+                int nboxes = 0;
+                detection *dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes);
+                //printf("%d\n", nboxes);
+                //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
+                if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
+                
+                fprintf(stderr,"%d ",nboxes);
+                for (int i = 0; i < nboxes; i++) {
+                    
+                    float maxProb = 0;
+                    int maxClassIdx = -1;
+                    for (int j = 0; j < l.classes; j++) {
+                        
+                            if (dets[i].prob[j] > maxProb) {
+                                maxProb = dets[i].prob[j];
+                                maxClassIdx = j;
+                            }
+                        
+                    }
+                    
+                    if (maxClassIdx >= 0) {
+                        box b = dets[i].bbox;
+                        int left  = (b.x-b.w/2.)*im.w;
+                        int right = (b.x+b.w/2.)*im.w;
+                        int top   = (b.y-b.h/2.)*im.h;
+                        int bot   = (b.y+b.h/2.)*im.h;
+                        fprintf(stderr,"%d %f %d %d %d %d ",maxClassIdx,maxProb,left,right,top,bot);
+                    }
+                }
+                fprintf(stderr,"\n");
+                
+                
+                //draw_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
+                free_detections(dets, nboxes);
+//                if(outfolder){
+//                    save_image(im, outfolder);
+//                }
+//                else{
+//                    save_image(im, "predictions");
+//#ifdef OPENCV
+//                    cvNamedWindow("predictions", CV_WINDOW_NORMAL);
+//                    if(fullscreen){
+//                        cvSetWindowProperty("predictions", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+//                    }
+//                    show_image(im, "predictions");
+//                    cvWaitKey(0);
+//                    cvDestroyAllWindows();
+//#endif
+//                }
+
+                free_image(im);
+                free_image(sized);
+
+                
+        
+                
+                depthframeidx = 0;
+                rgbframeidx = 0;
+                rgb = 1;
+                count++;
+            } else {
+                if (rgb == 1) {
+                    rgbframeidx = 10*rgbframeidx + ch-48;
+                } else {
+                    depthframeidx = 10*depthframeidx + ch-48;
+                }
+            }
+        }
+        
+//        if(foldername){
+//            strncpy(input, foldername, 256);
+//        } else {
+//            printf("Enter Image Path: ");
+//            fflush(stdout);
+//            input = fgets(input, 256, stdin);
+//            if(!input) return;
+//            strtok(input, "\n");
+//        }
+    }
+    fclose(fin);
+   // fclose(fout);
+}
 
 void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, float thresh, float hier_thresh, char *outfile, int fullscreen)
 {
