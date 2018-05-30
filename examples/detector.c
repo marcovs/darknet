@@ -624,7 +624,7 @@ void test_detector_folder(char *datacfg, char *cfgfile, char *weightfile, char *
                 detection *dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes);
                 //printf("%d\n", nboxes);
                 //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
-                if (nms) do_nms_sort(dets, &nboxes, l.classes, nms);
+                //if (nms) do_nms_sort(dets, &nboxes, l.classes, nms);
                 
                 fprintf(stderr,"%d ",nboxes);
                 for (int i = 0; i < nboxes; i++) {
