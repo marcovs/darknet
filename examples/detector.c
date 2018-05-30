@@ -629,7 +629,7 @@ void test_detector_folder(char *datacfg, char *cfgfile, char *weightfile, char *
                 fprintf(stderr,"%d ",nboxes);
                 for (int i = 0; i < nboxes; i++) {
                     
-                    float maxProb = 0;
+                    float maxProb = -1;
                     int maxClassIdx = -1;
                     for (int j = 0; j < l.classes; j++) {
                         
