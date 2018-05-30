@@ -55,10 +55,10 @@ void do_nms_obj(detection *dets, int total, int classes, float thresh)
 }
 
 
-void do_nms_sort(detection *dets, int total, int classes, float thresh)
+void do_nms_sort(detection *dets, int *total, int classes, float thresh)
 {
     int i, j, k;
-    k = total-1;
+    k = *total-1;
     for(i = 0; i <= k; ++i){
         if(dets[i].objectness == 0){
             detection swap = dets[i];
@@ -68,17 +68,17 @@ void do_nms_sort(detection *dets, int total, int classes, float thresh)
             --i;
         }
     }
-    total = k+1;
+    *total = k+1;
 
     for(k = 0; k < classes; ++k){
-        for(i = 0; i < total; ++i){
+        for(i = 0; i < *total; ++i){
             dets[i].sort_class = k;
         }
-        qsort(dets, total, sizeof(detection), nms_comparator);
-        for(i = 0; i < total; ++i){
+        qsort(dets, *total, sizeof(detection), nms_comparator);
+        for(i = 0; i < *total; ++i){
             if(dets[i].prob[k] == 0) continue;
             box a = dets[i].bbox;
-            for(j = i+1; j < total; ++j){
+            for(j = i+1; j < *total; ++j){
                 box b = dets[j].bbox;
                 if (box_iou(a, b) > thresh){
                     dets[j].prob[k] = 0;
