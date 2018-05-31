@@ -582,7 +582,7 @@ void test_detector_folder(char *datacfg, char *cfgfile, char *weightfile, char *
     strcat(filelistname,"/frameCorrespondences.txt");
     strcpy(foutname,foldername);
     strcat(foutname,foutext);
-    char *rootname = "/colour_";
+    char *rootname = "/colour/colour_";
     char *ext = ".png";
     fin = fopen(filelistname,"r");
    // fout = fopen(foutname,"w+");
