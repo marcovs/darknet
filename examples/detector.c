@@ -576,7 +576,7 @@ void test_detector_folder(char *datacfg, char *cfgfile, char *weightfile, char *
     char *filelistname;
     char *foutname;
     char *foutext = "/objectDetectionOutput.txt";
-    filelistname = malloc(strlen(foldername)+25);
+    filelistname = malloc(strlen(foldername)+32);
     foutname = malloc(strlen(foldername)+strlen(foutext));
     strcpy(filelistname,foldername);
     strcat(filelistname,"/frameCorrespondences.txt");
